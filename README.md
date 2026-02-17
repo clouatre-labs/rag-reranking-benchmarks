@@ -4,13 +4,19 @@
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/clouatre-labs/rag-reranking-benchmarks?style=flat)](https://github.com/clouatre-labs/rag-reranking-benchmarks)
-[![Python](https://img.shields.io/badge/python-3.x-blue)](https://python.org)
+[![Python](https://img.shields.io/badge/python-3.11+-blue)](https://python.org)
+[![Measurements](https://img.shields.io/badge/measurements-480-green)](data/raw_timings.csv)
 
 Does reranking actually slow down RAG queries? We measured it. 480 timing measurements across 4 model families and 2 providers say: **no, +31ms is noise in a multi-second pipeline.**
 
 Supplementary materials for [Making Legacy Knowledge Searchable with RAG](https://clouatre.ca/posts/rag-legacy-systems/).
 
 </div>
+
+> [!IMPORTANT]
+> Reranking adds +31ms to a 10-second pipeline (0.3% overhead). ANOVA confirms no significant difference across 4 model families (p=0.34). The cost is noise.
+
+---
 
 ## The Question
 
@@ -26,7 +32,11 @@ Total query time (typical):  ~10,000ms
 └── Other (embedding, RRF):       ~49ms  (0.5%)
 ```
 
+---
+
 ## Results
+
+See [METHODOLOGY.md](METHODOLOGY.md) for measurement approach and statistical methods.
 
 ### Reranking Latency (Single-Model, Production)
 
@@ -58,9 +68,21 @@ ANOVA p=0.34: no statistically significant difference across models. Cross-provi
 | Configuration | 5 | 60% | 80% |
 | **Overall** | **20** | **85%** | **95%** |
 
-0% false positive rate. 97.8% average accuracy on ground truth validation. See `query-category-eval/` for phase-by-phase results.
+0% false positive rate. 97.8% average accuracy on ground truth validation. See [`query-category-eval/`](query-category-eval/) for phase-by-phase results.
+
+---
 
 ## System Under Test
+
+```mermaid
+graph LR
+    Q[Query] --> BM25[BM25 Search<br/>~15ms]
+    Q --> VS[Vector Search<br/>~25ms]
+    BM25 --> RRF[RRF Fusion<br/>~2ms]
+    VS --> RRF
+    RRF --> RR[Reranking<br/>~31ms]
+    RR --> LLM[LLM Generation<br/>~9,800ms]
+```
 
 ```text
 Corpus:      7,432 pages / 20,679 chunks (Oracle Essbase 11.1.x documentation)
@@ -71,11 +93,14 @@ Hardware:    MacBook Pro M-series (CPU only, no GPU)
 Measurements: 480 total (120 single-model + 360 multi-model)
 ```
 
+---
+
 ## How It Works
 
 The production system combines BM25 keyword search with vector similarity search, fuses results with reciprocal rank fusion, then optionally reranks with a cross-encoder. These are the core components that were benchmarked.
 
-### Hybrid Retriever
+<details>
+<summary>Hybrid Retriever (click to expand)</summary>
 
 ```python
 class HybridRetriever:
@@ -97,7 +122,10 @@ class HybridRetriever:
         return self._ranker
 ```
 
-### Reranking Step
+</details>
+
+<details>
+<summary>Reranking Step (click to expand)</summary>
 
 The `_rerank` method is the +31ms we measured. FlashRank scores each chunk against the query using a cross-encoder, then returns the top candidates by relevance:
 
@@ -112,7 +140,10 @@ The `_rerank` method is the +31ms we measured. FlashRank scores each chunk again
         return [docs[result["id"]] for result in results[:RERANK_TOP_N]]
 ```
 
-### Reciprocal Rank Fusion
+</details>
+
+<details>
+<summary>Reciprocal Rank Fusion (click to expand)</summary>
 
 BM25 and vector search each return 16 candidates. RRF combines the two ranked lists into a single score, so documents found by both methods float to the top:
 
@@ -140,7 +171,10 @@ BM25 and vector search each return 16 candidates. RRF combines the two ranked li
         return self._rerank(query, candidates) if self.use_rerank else candidates[:self.k]
 ```
 
-### Cross-Model Validation
+</details>
+
+<details>
+<summary>Cross-Model Validation (click to expand)</summary>
 
 The statistical analysis validates that reranking overhead is model-agnostic across all 4 LLM families:
 
@@ -166,6 +200,10 @@ for (model, _), overhead in overheads.items():
 f_stat, p_value = f_oneway(*per_model.values())
 ```
 
+</details>
+
+---
+
 ## Project Structure
 
 ```text
@@ -189,6 +227,8 @@ rag-reranking-benchmarks/
     └── phase4_validation.json         # Validation results
 ```
 
+---
+
 ## Reproducing
 
 ```bash
@@ -204,15 +244,20 @@ python scripts/stats_analysis.py
 
 See [METHODOLOGY.md](METHODOLOGY.md) for the full measurement approach.
 
+---
+
 ## Adapting for Your System
 
-The benchmark script is a template. To benchmark your own RAG pipeline:
+The benchmark script is a template. To benchmark your own RAG pipeline, customize these 4 key points in `benchmark_retrieval.py`:
 
-1. Replace imports with your retrieval and reranking components
-2. Define domain-specific test queries
-3. Adjust retrieval parameters (k, reranking model, candidate count)
+1. **`setup_rag_components()`** - Initialize your vector store, BM25 index, and embeddings model
+2. **`create_retriever()`** - Build your retriever with your reranking model and fusion strategy
+3. **`TEST_QUERIES`** - Define domain-specific test queries (aim for 20+ covering different categories)
+4. **`retrieve()`** - Implement the actual retrieval call with your pipeline
 
 The statistical analysis script works on any CSV with the same column schema as `data/raw_timings.csv`.
+
+---
 
 ## Citation
 
@@ -225,6 +270,8 @@ The statistical analysis script works on any CSV with the same column schema as 
   url    = {https://clouatre.ca/posts/rag-legacy-systems/}
 }
 ```
+
+---
 
 ## License
 

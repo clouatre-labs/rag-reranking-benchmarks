@@ -1,4 +1,4 @@
-# RAG Reranking Benchmarks
+# Measurement Methodology
 
 ## Abstract
 
@@ -9,6 +9,18 @@ We measured reranking overhead in a production RAG system across 4 LLM families 
 ### Measurement Scope
 
 We measured **retrieval latency only** - query submission to ranked document retrieval, excluding LLM generation.
+
+```mermaid
+graph LR
+    subgraph measured ["Measured (time.perf_counter)"]
+        BM25[BM25 Search] --> RRF[RRF Fusion]
+        VS[Vector Search] --> RRF
+        RRF --> RR[Reranking]
+    end
+    Q[Query] --> measured
+    measured --> LLM[LLM Generation]
+    style LLM fill:#f5f5f5,stroke:#ccc,stroke-dasharray: 5 5
+```
 
 | Component | Included | Typical Time |
 |-----------|----------|--------------|
@@ -85,6 +97,8 @@ CPU-only inference via FlashRank (Python).
 
 **Total measurements:** 480 (120 Bedrock + 360 OpenRouter)
 
+---
+
 ## Results
 
 ### Single-Model (Amazon Bedrock)
@@ -125,6 +139,9 @@ CPU-only inference via FlashRank (Python).
 
 **Conclusion:** No significant difference across models (p > 0.05).
 
+> [!NOTE]
+> ANOVA p=0.34: no statistically significant difference in reranking overhead across model families. The 4.6ms standard deviation confirms model-agnostic behavior.
+
 **95% Confidence Intervals:**
 
 | Model | Overhead | 95% CI |
@@ -135,15 +152,28 @@ CPU-only inference via FlashRank (Python).
 
 Overlapping intervals confirm model-agnostic behavior.
 
+```text
+Reranking Overhead: 95% Confidence Intervals
+
+Mistral Devstral  |         [-------|---------------]
+Llama 3.3 70B     |              [--|--]
+Qwen 2.5 Coder    |              [----|]
+                  |----|----|----|----|----|----|----| 
+                  15   20   25   30   35   40   45  50
+                              Overhead (ms)
+```
+
+---
+
 ## Discussion
 
 ### Comparison to Prior Work
 
 | Source | Reported Overhead | Our Result |
 |--------|-------------------|------------|
-| FlashRank paper | 50-100ms | 31ms |
-| CustomGPT (2025) | 50-150ms | 31ms |
-| LangChain docs | "negligible for <1000 candidates" | 31ms for 16 |
+| [FlashRank paper](https://github.com/PrithivirajDamodaran/FlashRank) | 50-100ms | 31ms |
+| [CustomGPT (2025)](https://customgpt.ai/what-is-a-reranker/) | 50-150ms | 31ms |
+| [LangChain docs](https://python.langchain.com/docs/concepts/retrievers/) | "negligible for <1000 candidates" | 31ms for 16 |
 
 Lower overhead likely due to: small candidate set (16 vs 50-100), CPU-optimized model, efficient hybrid retrieval.
 
@@ -159,6 +189,8 @@ Lower overhead likely due to: small candidate set (16 vs 50-100), CPU-optimized 
 - **Hardware:** CPU-only. GPU would reduce overhead further.
 - **Provider variability:** OpenRouter free tier may introduce rate limiting. Mitigated by averaging.
 
+---
+
 ## Reproducibility
 
 ### Data Files
@@ -172,9 +204,11 @@ Lower overhead likely due to: small candidate set (16 vs 50-100), CPU-optimized 
 ### Reproducing the Analysis
 
 ```bash
-# Install dependencies
+# Install dependencies with uv
 uv run --with scipy python scripts/stats_analysis.py
 ```
+
+See [uv](https://docs.astral.sh/uv/) for package manager documentation.
 
 ### Data Format
 
@@ -186,6 +220,15 @@ uv run --with scipy python scripts/stats_analysis.py
 - `run`: Run number (1-3)
 - `latency_ms`: Retrieval latency in milliseconds
 
+Sample data (first 3 rows):
+
+```csv
+query_id,model,provider,condition,run,latency_ms
+Q1,claude-haiku-4.5,bedrock,with_rerank,1,62.9
+Q1,claude-haiku-4.5,bedrock,with_rerank,2,124.6
+Q1,claude-haiku-4.5,bedrock,with_rerank,3,65.7
+```
+
 ### Methodology
 
 1. Set up hybrid RAG (BM25 + vector + reranking)
@@ -193,3 +236,7 @@ uv run --with scipy python scripts/stats_analysis.py
 3. Run each query 3x with/without reranking
 4. Measure retrieval time only (exclude LLM generation)
 5. Calculate mean, median, min, max per condition
+
+---
+
+See [README.md](README.md) for results summary and project overview.
