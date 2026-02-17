@@ -12,14 +12,16 @@ We measured **retrieval latency only** - query submission to ranked document ret
 
 ```mermaid
 graph LR
-    subgraph measured ["Measured (time.perf_counter)"]
+    subgraph measured [" "]
         BM25[BM25 Search] --> RRF[RRF Fusion]
         VS[Vector Search] --> RRF
         RRF --> RR[Reranking]
     end
     Q[Query] --> measured
     measured --> LLM[LLM Generation]
+    M["Measured (time.perf_counter)"] -.-> measured
     style LLM fill:#f5f5f5,stroke:#ccc,stroke-dasharray: 5 5
+    style M fill:none,stroke:none
 ```
 
 | Component | Included | Typical Time |
