@@ -73,66 +73,97 @@ Measurements: 480 total (120 single-model + 360 multi-model)
 
 ## How It Works
 
-The benchmark template measures retrieval latency with and without reranking, averaging over multiple runs per query:
+The production system combines BM25 keyword search with vector similarity search, fuses results with reciprocal rank fusion, then optionally reranks with a cross-encoder. These are the core components that were benchmarked.
+
+### Hybrid Retriever
 
 ```python
-def benchmark_retrieval(
-    query: str,
-    chunks,
-    vector_store,
-    bm25,
-    use_rerank: bool = True,
-    num_runs: int = 3,
-) -> dict:
-    """Benchmark retrieval for a single query (average over multiple runs)."""
-    retriever = create_retriever(chunks, vector_store, bm25, use_rerank)
+class HybridRetriever:
+    """Combines BM25 keyword search with vector similarity search and FlashRank reranking."""
 
-    latencies = []
-    for _ in range(num_runs):
-        start = time.perf_counter()
-        docs = retrieve(retriever, query)
-        latency_ms = (time.perf_counter() - start) * 1000
-        latencies.append(latency_ms)
+    def __init__(self, chunks: list[Document], vector_store: Chroma,
+                 k: int = 8, use_rerank: bool = True):
+        self.chunks = chunks
+        self.vector_store = vector_store
+        self.k = k
+        self.use_rerank = use_rerank
+        self.bm25 = BM25Okapi([doc.page_content.lower().split() for doc in chunks])
+        self._ranker: Ranker | None = None  # lazy-loaded
 
-    avg_latency = sum(latencies) / len(latencies)
-
-    return {
-        "mode": "with_rerank" if use_rerank else "without_rerank",
-        "avg_latency_ms": round(avg_latency, 1),
-        "min_latency_ms": round(min(latencies), 1),
-        "max_latency_ms": round(max(latencies), 1),
-        "num_docs": len(docs) if docs else 0,
-    }
+    @property
+    def ranker(self) -> Ranker:
+        if self._ranker is None:
+            self._ranker = Ranker()  # FlashRank, ~4MB, CPU-only
+        return self._ranker
 ```
 
-The statistical analysis script validates cross-model consistency with one-way ANOVA:
+### Reranking Step
+
+The `_rerank` method is the +31ms we measured. FlashRank scores each chunk against the query using a cross-encoder, then returns the top candidates by relevance:
+
+```python
+    def _rerank(self, query: str, docs: list[Document]) -> list[Document]:
+        """Rerank documents using FlashRank cross-encoder. Adds ~31ms."""
+        passages = [
+            {"id": i, "text": doc.page_content, "meta": doc.metadata}
+            for i, doc in enumerate(docs)
+        ]
+        results = self.ranker.rerank(RerankRequest(query=query, passages=passages))
+        return [docs[result["id"]] for result in results[:RERANK_TOP_N]]
+```
+
+### Reciprocal Rank Fusion
+
+BM25 and vector search each return 16 candidates. RRF combines the two ranked lists into a single score, so documents found by both methods float to the top:
+
+```python
+    def invoke(self, query: str) -> list[Document]:
+        bm25_scores = self.bm25.get_scores(query.lower().split())
+        bm25_top = sorted(range(len(bm25_scores)),
+                          key=lambda i: bm25_scores[i], reverse=True)[:16]
+        vector_results = self.vector_store.similarity_search_with_score(query, k=16)
+
+        # Reciprocal rank fusion (k=60)
+        doc_scores: dict[str, tuple[Document, float]] = {}
+        for rank, idx in enumerate(bm25_top):
+            doc_id = self.chunks[idx].metadata.get("source", "")
+            doc_scores[doc_id] = (self.chunks[idx],
+                                  doc_scores.get(doc_id, (None, 0))[1] + 1 / (rank + 60))
+        for rank, (doc, _) in enumerate(vector_results):
+            doc_id = doc.metadata.get("source", "")
+            doc_scores[doc_id] = (doc,
+                                  doc_scores.get(doc_id, (None, 0))[1] + 1 / (rank + 60))
+
+        sorted_docs = sorted(doc_scores.values(), key=lambda x: x[1], reverse=True)
+        candidates = [doc for doc, _ in sorted_docs[:16]]
+
+        return self._rerank(query, candidates) if self.use_rerank else candidates[:self.k]
+```
+
+### Cross-Model Validation
+
+The statistical analysis validates that reranking overhead is model-agnostic across all 4 LLM families:
 
 ```python
 def calculate_overhead_per_query(data: list[dict]) -> dict[tuple[str, str], float]:
-    """Calculate reranking overhead per query per model.
-
-    Overhead = mean(with_rerank) - mean(without_rerank) for each query.
-    """
+    """Overhead = mean(with_rerank) - mean(without_rerank) per query per model."""
     grouped: dict[tuple[str, str, str], list[float]] = defaultdict(list)
     for row in data:
-        key = (row["model"], row["query_id"], row["condition"])
-        grouped[key].append(row["latency_ms"])
+        grouped[(row["model"], row["query_id"], row["condition"])].append(row["latency_ms"])
 
-    overheads: dict[tuple[str, str], float] = {}
-    models_queries = {(row["model"], row["query_id"]) for row in data}
-
-    for model, query_id in models_queries:
-        with_rerank = grouped.get((model, query_id, "with_rerank"), [])
-        without_rerank = grouped.get((model, query_id, "without_rerank"), [])
-
-        if with_rerank and without_rerank:
-            overhead = (
-                sum(with_rerank) / len(with_rerank)
-                - sum(without_rerank) / len(without_rerank)
-            )
-            overheads[(model, query_id)] = overhead
-
+    overheads = {}
+    for model, query_id in {(r["model"], r["query_id"]) for r in data}:
+        with_rr = grouped.get((model, query_id, "with_rerank"), [])
+        without_rr = grouped.get((model, query_id, "without_rerank"), [])
+        if with_rr and without_rr:
+            overheads[(model, query_id)] = mean(with_rr) - mean(without_rr)
     return overheads
+
+# One-way ANOVA: p=0.34, no significant difference across models
+per_model = defaultdict(list)
+for (model, _), overhead in overheads.items():
+    per_model[model].append(overhead)
+f_stat, p_value = f_oneway(*per_model.values())
 ```
 
 ## Project Structure
