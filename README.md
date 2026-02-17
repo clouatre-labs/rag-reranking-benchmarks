@@ -18,7 +18,7 @@ Reranking improves retrieval quality by reordering candidate chunks before they 
 
 **Short answer:** the cost is 31ms on a 10-second pipeline. That is 0.3% overhead, and it is model-agnostic.
 
-```
+```text
 Total query time (typical):  ~10,000ms
 ├── LLM generation:           ~9,800ms  (98%)
 ├── Vector + BM25 retrieval:     ~120ms  (1.2%)
@@ -62,7 +62,7 @@ ANOVA p=0.34: no statistically significant difference across models. Cross-provi
 
 ## System Under Test
 
-```
+```text
 Corpus:      7,432 pages / 20,679 chunks (Oracle Essbase 11.1.x documentation)
 Retrieval:   Hybrid (BM25 + vector search, RRF fusion)
 Reranker:    FlashRank ms-marco-MiniLM-L-12-v2 (~4MB, CPU-only)
@@ -71,9 +71,73 @@ Hardware:    MacBook Pro M-series (CPU only, no GPU)
 Measurements: 480 total (120 single-model + 360 multi-model)
 ```
 
+## How It Works
+
+The benchmark template measures retrieval latency with and without reranking, averaging over multiple runs per query:
+
+```python
+def benchmark_retrieval(
+    query: str,
+    chunks,
+    vector_store,
+    bm25,
+    use_rerank: bool = True,
+    num_runs: int = 3,
+) -> dict:
+    """Benchmark retrieval for a single query (average over multiple runs)."""
+    retriever = create_retriever(chunks, vector_store, bm25, use_rerank)
+
+    latencies = []
+    for _ in range(num_runs):
+        start = time.perf_counter()
+        docs = retrieve(retriever, query)
+        latency_ms = (time.perf_counter() - start) * 1000
+        latencies.append(latency_ms)
+
+    avg_latency = sum(latencies) / len(latencies)
+
+    return {
+        "mode": "with_rerank" if use_rerank else "without_rerank",
+        "avg_latency_ms": round(avg_latency, 1),
+        "min_latency_ms": round(min(latencies), 1),
+        "max_latency_ms": round(max(latencies), 1),
+        "num_docs": len(docs) if docs else 0,
+    }
+```
+
+The statistical analysis script validates cross-model consistency with one-way ANOVA:
+
+```python
+def calculate_overhead_per_query(data: list[dict]) -> dict[tuple[str, str], float]:
+    """Calculate reranking overhead per query per model.
+
+    Overhead = mean(with_rerank) - mean(without_rerank) for each query.
+    """
+    grouped: dict[tuple[str, str, str], list[float]] = defaultdict(list)
+    for row in data:
+        key = (row["model"], row["query_id"], row["condition"])
+        grouped[key].append(row["latency_ms"])
+
+    overheads: dict[tuple[str, str], float] = {}
+    models_queries = {(row["model"], row["query_id"]) for row in data}
+
+    for model, query_id in models_queries:
+        with_rerank = grouped.get((model, query_id, "with_rerank"), [])
+        without_rerank = grouped.get((model, query_id, "without_rerank"), [])
+
+        if with_rerank and without_rerank:
+            overhead = (
+                sum(with_rerank) / len(with_rerank)
+                - sum(without_rerank) / len(without_rerank)
+            )
+            overheads[(model, query_id)] = overhead
+
+    return overheads
+```
+
 ## Project Structure
 
-```
+```text
 rag-reranking-benchmarks/
 ├── README.md                          # This file
 ├── METHODOLOGY.md                     # Measurement approach and statistical methods
@@ -120,10 +184,14 @@ The statistical analysis script works on any CSV with the same column schema as 
 
 ## Citation
 
-```
-Clouatre, H. (2026). RAG Reranking Benchmarks.
-Supplementary materials for "Making Legacy Knowledge Searchable with RAG".
-https://clouatre.ca/posts/rag-legacy-systems/
+```bibtex
+@misc{clouatre2026ragreranking,
+  author = {Clouatre, Hugues},
+  title  = {RAG Reranking Benchmarks},
+  year   = {2026},
+  note   = {Supplementary materials for "Making Legacy Knowledge Searchable with RAG"},
+  url    = {https://clouatre.ca/posts/rag-legacy-systems/}
+}
 ```
 
 ## License
