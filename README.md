@@ -18,7 +18,7 @@ Reranking improves retrieval quality by reordering candidate chunks before they 
 
 **Short answer:** the cost is 31ms on a 10-second pipeline. That is 0.3% overhead, and it is model-agnostic.
 
-```
+```text
 Total query time (typical):  ~10,000ms
 ├── LLM generation:           ~9,800ms  (98%)
 ├── Vector + BM25 retrieval:     ~120ms  (1.2%)
@@ -62,7 +62,7 @@ ANOVA p=0.34: no statistically significant difference across models. Cross-provi
 
 ## System Under Test
 
-```
+```text
 Corpus:      7,432 pages / 20,679 chunks (Oracle Essbase 11.1.x documentation)
 Retrieval:   Hybrid (BM25 + vector search, RRF fusion)
 Reranker:    FlashRank ms-marco-MiniLM-L-12-v2 (~4MB, CPU-only)
@@ -71,9 +71,104 @@ Hardware:    MacBook Pro M-series (CPU only, no GPU)
 Measurements: 480 total (120 single-model + 360 multi-model)
 ```
 
+## How It Works
+
+The production system combines BM25 keyword search with vector similarity search, fuses results with reciprocal rank fusion, then optionally reranks with a cross-encoder. These are the core components that were benchmarked.
+
+### Hybrid Retriever
+
+```python
+class HybridRetriever:
+    """Combines BM25 keyword search with vector similarity search and FlashRank reranking."""
+
+    def __init__(self, chunks: list[Document], vector_store: Chroma,
+                 k: int = 8, use_rerank: bool = True):
+        self.chunks = chunks
+        self.vector_store = vector_store
+        self.k = k
+        self.use_rerank = use_rerank
+        self.bm25 = BM25Okapi([doc.page_content.lower().split() for doc in chunks])
+        self._ranker: Ranker | None = None  # lazy-loaded
+
+    @property
+    def ranker(self) -> Ranker:
+        if self._ranker is None:
+            self._ranker = Ranker()  # FlashRank, ~4MB, CPU-only
+        return self._ranker
+```
+
+### Reranking Step
+
+The `_rerank` method is the +31ms we measured. FlashRank scores each chunk against the query using a cross-encoder, then returns the top candidates by relevance:
+
+```python
+    def _rerank(self, query: str, docs: list[Document]) -> list[Document]:
+        """Rerank documents using FlashRank cross-encoder. Adds ~31ms."""
+        passages = [
+            {"id": i, "text": doc.page_content, "meta": doc.metadata}
+            for i, doc in enumerate(docs)
+        ]
+        results = self.ranker.rerank(RerankRequest(query=query, passages=passages))
+        return [docs[result["id"]] for result in results[:RERANK_TOP_N]]
+```
+
+### Reciprocal Rank Fusion
+
+BM25 and vector search each return 16 candidates. RRF combines the two ranked lists into a single score, so documents found by both methods float to the top:
+
+```python
+    def invoke(self, query: str) -> list[Document]:
+        bm25_scores = self.bm25.get_scores(query.lower().split())
+        bm25_top = sorted(range(len(bm25_scores)),
+                          key=lambda i: bm25_scores[i], reverse=True)[:16]
+        vector_results = self.vector_store.similarity_search_with_score(query, k=16)
+
+        # Reciprocal rank fusion (k=60)
+        doc_scores: dict[str, tuple[Document, float]] = {}
+        for rank, idx in enumerate(bm25_top):
+            doc_id = self.chunks[idx].metadata.get("source", "")
+            doc_scores[doc_id] = (self.chunks[idx],
+                                  doc_scores.get(doc_id, (None, 0))[1] + 1 / (rank + 60))
+        for rank, (doc, _) in enumerate(vector_results):
+            doc_id = doc.metadata.get("source", "")
+            doc_scores[doc_id] = (doc,
+                                  doc_scores.get(doc_id, (None, 0))[1] + 1 / (rank + 60))
+
+        sorted_docs = sorted(doc_scores.values(), key=lambda x: x[1], reverse=True)
+        candidates = [doc for doc, _ in sorted_docs[:16]]
+
+        return self._rerank(query, candidates) if self.use_rerank else candidates[:self.k]
+```
+
+### Cross-Model Validation
+
+The statistical analysis validates that reranking overhead is model-agnostic across all 4 LLM families:
+
+```python
+def calculate_overhead_per_query(data: list[dict]) -> dict[tuple[str, str], float]:
+    """Overhead = mean(with_rerank) - mean(without_rerank) per query per model."""
+    grouped: dict[tuple[str, str, str], list[float]] = defaultdict(list)
+    for row in data:
+        grouped[(row["model"], row["query_id"], row["condition"])].append(row["latency_ms"])
+
+    overheads = {}
+    for model, query_id in {(r["model"], r["query_id"]) for r in data}:
+        with_rr = grouped.get((model, query_id, "with_rerank"), [])
+        without_rr = grouped.get((model, query_id, "without_rerank"), [])
+        if with_rr and without_rr:
+            overheads[(model, query_id)] = mean(with_rr) - mean(without_rr)
+    return overheads
+
+# One-way ANOVA: p=0.34, no significant difference across models
+per_model = defaultdict(list)
+for (model, _), overhead in overheads.items():
+    per_model[model].append(overhead)
+f_stat, p_value = f_oneway(*per_model.values())
+```
+
 ## Project Structure
 
-```
+```text
 rag-reranking-benchmarks/
 ├── README.md                          # This file
 ├── METHODOLOGY.md                     # Measurement approach and statistical methods
@@ -120,10 +215,14 @@ The statistical analysis script works on any CSV with the same column schema as 
 
 ## Citation
 
-```
-Clouatre, H. (2026). RAG Reranking Benchmarks.
-Supplementary materials for "Making Legacy Knowledge Searchable with RAG".
-https://clouatre.ca/posts/rag-legacy-systems/
+```bibtex
+@misc{clouatre2026ragreranking,
+  author = {Clouatre, Hugues},
+  title  = {RAG Reranking Benchmarks},
+  year   = {2026},
+  note   = {Supplementary materials for "Making Legacy Knowledge Searchable with RAG"},
+  url    = {https://clouatre.ca/posts/rag-legacy-systems/}
+}
 ```
 
 ## License
