@@ -13,16 +13,9 @@ Supplementary materials for [Making Legacy Knowledge Searchable with RAG](https:
 
 </div>
 
-> [!IMPORTANT]
-> Reranking adds +31ms to a 10-second pipeline (0.3% overhead). ANOVA confirms no significant difference across 4 model families (p=0.34). The cost is noise.
-
----
-
 ## The Question
 
 Reranking improves retrieval quality by reordering candidate chunks before they reach the LLM. But it adds a neural inference step. In a production RAG pipeline serving legacy enterprise documentation, is the latency cost worth it?
-
-**Short answer:** the cost is 31ms on a 10-second pipeline. That is 0.3% overhead, and it is model-agnostic.
 
 ```text
 Total query time (typical):  ~10,000ms
@@ -97,10 +90,7 @@ Measurements: 480 total (120 single-model + 360 multi-model)
 
 ## How It Works
 
-The production system combines BM25 keyword search with vector similarity search, fuses results with reciprocal rank fusion, then optionally reranks with a cross-encoder. These are the core components that were benchmarked.
-
-<details>
-<summary>Hybrid Retriever (click to expand)</summary>
+### Hybrid Retriever
 
 ```python
 class HybridRetriever:
@@ -122,10 +112,7 @@ class HybridRetriever:
         return self._ranker
 ```
 
-</details>
-
-<details>
-<summary>Reranking Step (click to expand)</summary>
+### Reranking Step
 
 The `_rerank` method is the +31ms we measured. FlashRank scores each chunk against the query using a cross-encoder, then returns the top candidates by relevance:
 
@@ -140,10 +127,7 @@ The `_rerank` method is the +31ms we measured. FlashRank scores each chunk again
         return [docs[result["id"]] for result in results[:RERANK_TOP_N]]
 ```
 
-</details>
-
-<details>
-<summary>Reciprocal Rank Fusion (click to expand)</summary>
+### Reciprocal Rank Fusion
 
 BM25 and vector search each return 16 candidates. RRF combines the two ranked lists into a single score, so documents found by both methods float to the top:
 
@@ -171,10 +155,7 @@ BM25 and vector search each return 16 candidates. RRF combines the two ranked li
         return self._rerank(query, candidates) if self.use_rerank else candidates[:self.k]
 ```
 
-</details>
-
-<details>
-<summary>Cross-Model Validation (click to expand)</summary>
+### Cross-Model Validation
 
 The statistical analysis validates that reranking overhead is model-agnostic across all 4 LLM families:
 
@@ -199,8 +180,6 @@ for (model, _), overhead in overheads.items():
     per_model[model].append(overhead)
 f_stat, p_value = f_oneway(*per_model.values())
 ```
-
-</details>
 
 ---
 

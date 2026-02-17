@@ -150,8 +150,6 @@ CPU-only inference via FlashRank (Python).
 | Llama 3.3 70B Instruct | 24.1ms | [20.5, 27.7] |
 | Qwen 2.5 Coder 32B | 25.1ms | [21.0, 29.2] |
 
-Overlapping intervals confirm model-agnostic behavior.
-
 ```text
 Reranking Overhead: 95% Confidence Intervals
 
