@@ -177,7 +177,3 @@ Validation method: Manual corpus search using `rg` (ripgrep) against Oracle Essb
   url    = {https://clouatre.ca/posts/rag-legacy-knowledge/}
 }
 ```
-
----
-
-**Last Updated**: 2026-02-17
