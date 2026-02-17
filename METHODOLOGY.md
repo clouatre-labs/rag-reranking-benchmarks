@@ -81,7 +81,7 @@ CPU-only inference via FlashRank (Python).
 | Parameter | Value |
 |-----------|-------|
 | Queries | 20 domain-specific (configuration, troubleshooting, architecture) |
-| Runs per query | 3 iterations |
+| Runs per query | 3 iterations (reduces OS scheduling noise while keeping total runtime practical) |
 | Conditions | With reranking vs. without reranking |
 | Warm-up | Embeddings, vector store, BM25 index pre-loaded |
 | Timing | `time.perf_counter()` around retrieval call |
@@ -128,19 +128,24 @@ CPU-only inference via FlashRank (Python).
 
 ### Statistical Analysis
 
-**ANOVA (cross-model variance):**
+**One-way ANOVA (cross-model variance, OpenRouter models only):**
 
 | Metric | Value |
 |--------|-------|
 | Between-group variance | 423.7 ms^2 |
 | Within-group variance | 385.8 ms^2 |
-| F-statistic | 1.10 |
+| F(2,57) | 1.10 |
 | p-value | 0.34 |
+| Eta-squared | 0.037 (3.7% of variance explained by model choice) |
 
-**Conclusion:** No significant difference across models (p > 0.05).
+Shapiro-Wilk tests indicate non-normal distributions in 2 of 3 groups (right-skewed latency data). Levene's test confirms equal variances (p=0.058). Because ANOVA is violated on normality, we confirm with a non-parametric test:
+
+**Kruskal-Wallis (non-parametric confirmation):** H=0.48, p=0.78.
+
+Both tests agree: model choice does not significantly affect reranking overhead.
 
 > [!NOTE]
-> ANOVA p=0.34: no statistically significant difference in reranking overhead across model families. The 4.6ms standard deviation confirms model-agnostic behavior.
+> ANOVA p=0.34, Kruskal-Wallis p=0.78, eta-squared=0.037. Model choice explains 3.7% of overhead variance. The result is robust to the normality violation.
 
 **95% Confidence Intervals:**
 

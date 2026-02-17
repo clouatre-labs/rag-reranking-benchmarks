@@ -49,7 +49,7 @@ See [METHODOLOGY.md](METHODOLOGY.md) for measurement approach and statistical me
 | Llama 3.3 | 70B | OpenRouter | +24.1ms |
 | Qwen 2.5 Coder | 32B | OpenRouter | +25.1ms |
 
-ANOVA p=0.34: no statistically significant difference across models. Cross-provider delta (Bedrock vs OpenRouter): 4.1ms.
+ANOVA p=0.34, eta-squared=0.037: model choice explains 3.7% of overhead variance. Kruskal-Wallis confirms (p=0.78). Cross-provider delta (Bedrock vs OpenRouter): 4.1ms. See [METHODOLOGY.md](METHODOLOGY.md#statistical-analysis) for assumption checks.
 
 ### Query Category Accuracy
 
