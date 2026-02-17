@@ -1,4 +1,4 @@
-# RAG Reranking Benchmarks
+# Measurement Methodology
 
 ## Abstract
 
@@ -9,6 +9,20 @@ We measured reranking overhead in a production RAG system across 4 LLM families 
 ### Measurement Scope
 
 We measured **retrieval latency only** - query submission to ranked document retrieval, excluding LLM generation.
+
+```mermaid
+graph LR
+    subgraph measured [" "]
+        BM25[BM25 Search] --> RRF[RRF Fusion]
+        VS[Vector Search] --> RRF
+        RRF --> RR[Reranking]
+    end
+    Q[Query] --> measured
+    measured --> LLM[LLM Generation]
+    M["Measured (time.perf_counter)"] -.-> measured
+    style LLM fill:#f5f5f5,stroke:#ccc,stroke-dasharray: 5 5
+    style M fill:none,stroke:none
+```
 
 | Component | Included | Typical Time |
 |-----------|----------|--------------|
@@ -69,7 +83,7 @@ CPU-only inference via FlashRank (Python).
 | Parameter | Value |
 |-----------|-------|
 | Queries | 20 domain-specific (configuration, troubleshooting, architecture) |
-| Runs per query | 3 iterations |
+| Runs per query | 3 iterations (reduces OS scheduling noise while keeping total runtime practical) |
 | Conditions | With reranking vs. without reranking |
 | Warm-up | Embeddings, vector store, BM25 index pre-loaded |
 | Timing | `time.perf_counter()` around retrieval call |
@@ -84,6 +98,8 @@ CPU-only inference via FlashRank (Python).
 | Qwen 2.5 Coder 32B | Alibaba | 32B | OpenRouter |
 
 **Total measurements:** 480 (120 Bedrock + 360 OpenRouter)
+
+---
 
 ## Results
 
@@ -114,16 +130,24 @@ CPU-only inference via FlashRank (Python).
 
 ### Statistical Analysis
 
-**ANOVA (cross-model variance):**
+**One-way ANOVA (cross-model variance, OpenRouter models only):**
 
 | Metric | Value |
 |--------|-------|
 | Between-group variance | 423.7 ms^2 |
 | Within-group variance | 385.8 ms^2 |
-| F-statistic | 1.10 |
+| F(2,57) | 1.10 |
 | p-value | 0.34 |
+| Eta-squared | 0.037 (3.7% of variance explained by model choice) |
 
-**Conclusion:** No significant difference across models (p > 0.05).
+Shapiro-Wilk tests indicate non-normal distributions in 2 of 3 groups (right-skewed latency data). Levene's test confirms equal variances (p=0.058). Because ANOVA is violated on normality, we confirm with a non-parametric test:
+
+**Kruskal-Wallis (non-parametric confirmation):** H=0.48, p=0.78.
+
+Both tests agree: model choice does not significantly affect reranking overhead.
+
+> [!NOTE]
+> ANOVA p=0.34, Kruskal-Wallis p=0.78, eta-squared=0.037. Model choice explains 3.7% of overhead variance. The result is robust to the normality violation.
 
 **95% Confidence Intervals:**
 
@@ -133,7 +157,18 @@ CPU-only inference via FlashRank (Python).
 | Llama 3.3 70B Instruct | 24.1ms | [20.5, 27.7] |
 | Qwen 2.5 Coder 32B | 25.1ms | [21.0, 29.2] |
 
-Overlapping intervals confirm model-agnostic behavior.
+```text
+Reranking Overhead: 95% Confidence Intervals
+
+Mistral Devstral  |         [-------|---------------]
+Llama 3.3 70B     |              [--|--]
+Qwen 2.5 Coder    |              [----|]
+                  |----|----|----|----|----|----|----| 
+                  15   20   25   30   35   40   45  50
+                              Overhead (ms)
+```
+
+---
 
 ## Discussion
 
@@ -141,9 +176,9 @@ Overlapping intervals confirm model-agnostic behavior.
 
 | Source | Reported Overhead | Our Result |
 |--------|-------------------|------------|
-| FlashRank paper | 50-100ms | 31ms |
-| CustomGPT (2025) | 50-150ms | 31ms |
-| LangChain docs | "negligible for <1000 candidates" | 31ms for 16 |
+| [FlashRank paper](https://github.com/PrithivirajDamodaran/FlashRank) | 50-100ms | 31ms |
+| [CustomGPT (2025)](https://customgpt.ai/what-is-a-reranker/) | 50-150ms | 31ms |
+| [LangChain docs](https://python.langchain.com/docs/concepts/retrievers/) | "negligible for <1000 candidates" | 31ms for 16 |
 
 Lower overhead likely due to: small candidate set (16 vs 50-100), CPU-optimized model, efficient hybrid retrieval.
 
@@ -159,6 +194,8 @@ Lower overhead likely due to: small candidate set (16 vs 50-100), CPU-optimized 
 - **Hardware:** CPU-only. GPU would reduce overhead further.
 - **Provider variability:** OpenRouter free tier may introduce rate limiting. Mitigated by averaging.
 
+---
+
 ## Reproducibility
 
 ### Data Files
@@ -172,9 +209,11 @@ Lower overhead likely due to: small candidate set (16 vs 50-100), CPU-optimized 
 ### Reproducing the Analysis
 
 ```bash
-# Install dependencies
+# Install dependencies with uv
 uv run --with scipy python scripts/stats_analysis.py
 ```
+
+See [uv](https://docs.astral.sh/uv/) for package manager documentation.
 
 ### Data Format
 
@@ -186,6 +225,15 @@ uv run --with scipy python scripts/stats_analysis.py
 - `run`: Run number (1-3)
 - `latency_ms`: Retrieval latency in milliseconds
 
+Sample data (first 3 rows):
+
+```csv
+query_id,model,provider,condition,run,latency_ms
+Q1,claude-haiku-4.5,bedrock,with_rerank,1,62.9
+Q1,claude-haiku-4.5,bedrock,with_rerank,2,124.6
+Q1,claude-haiku-4.5,bedrock,with_rerank,3,65.7
+```
+
 ### Methodology
 
 1. Set up hybrid RAG (BM25 + vector + reranking)
@@ -193,3 +241,7 @@ uv run --with scipy python scripts/stats_analysis.py
 3. Run each query 3x with/without reranking
 4. Measure retrieval time only (exclude LLM generation)
 5. Calculate mean, median, min, max per condition
+
+---
+
+See [README.md](README.md) for results summary and project overview.
