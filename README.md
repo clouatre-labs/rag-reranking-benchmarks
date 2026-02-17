@@ -53,15 +53,17 @@ ANOVA p=0.34, eta-squared=0.037: model choice explains 3.7% of overhead variance
 
 ### Query Category Accuracy
 
-| Category | Queries | Top-1 | Top-3 |
-|----------|---------|-------|-------|
-| Procedural | 5 | 100% | 100% |
-| Conceptual | 5 | 80% | 100% |
-| Troubleshooting | 5 | 100% | 100% |
-| Configuration | 5 | 60% | 80% |
-| **Overall** | **20** | **85%** | **95%** |
+Evaluation across 32 scored queries (Phase 2 + Phase 4) with ground truth validation:
 
-0% false positive rate. 97.8% average accuracy on ground truth validation. See [`query-category-eval/`](query-category-eval/) for phase-by-phase results.
+| Category | Queries | Pass | Partial | Fail | Pass Rate |
+|----------|---------|------|---------|------|-----------|
+| error_lookup | 8 | 4 | 1 | 3 | 50% |
+| conceptual | 8 | 7 | 1 | 0 | 88% |
+| procedural | 8 | 8 | 0 | 0 | 100% |
+| multi_hop | 8 | 5 | 2 | 1 | 62% |
+| **Total** | **32** | **24** | **4** | **4** | **75%** |
+
+0% false positive rate. 98.1% average accuracy on ground truth validation (8 validations across Phase 3-4). See [`query-category-eval/`](query-category-eval/) for phase-by-phase results.
 
 ---
 
