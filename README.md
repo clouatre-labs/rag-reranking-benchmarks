@@ -4,96 +4,119 @@
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/clouatre-labs/rag-reranking-benchmarks?style=flat)](https://github.com/clouatre-labs/rag-reranking-benchmarks)
+[![Python](https://img.shields.io/badge/python-3.x-blue)](https://python.org)
 
-Supplementary benchmarks for [Making Legacy Knowledge Searchable with RAG](https://clouatre.ca/posts/rag-legacy-systems/).
+Does reranking actually slow down RAG queries? We measured it. 480 timing measurements across 4 model families and 2 providers say: **no, +31ms is noise in a multi-second pipeline.**
+
+Supplementary materials for [Making Legacy Knowledge Searchable with RAG](https://clouatre.ca/posts/rag-legacy-systems/).
 
 </div>
 
-## Key Finding
+## The Question
 
-**Reranking overhead is minimal and model-agnostic:**
+Reranking improves retrieval quality by reordering candidate chunks before they reach the LLM. But it adds a neural inference step. In a production RAG pipeline serving legacy enterprise documentation, is the latency cost worth it?
 
-| Metric | Value |
-|--------|-------|
-| Mean overhead | +31ms |
-| Overhead as % of total query time | 0.3% |
-| Cross-model std | 4.6ms |
+**Short answer:** the cost is 31ms on a 10-second pipeline. That is 0.3% overhead, and it is model-agnostic.
 
-Reranking adds negligible latency while improving retrieval quality by 6-8%.
+```
+Total query time (typical):  ~10,000ms
+├── LLM generation:           ~9,800ms  (98%)
+├── Vector + BM25 retrieval:     ~120ms  (1.2%)
+├── Reranking (FlashRank):        ~31ms  (0.3%)  <-- this is what we measured
+└── Other (embedding, RRF):       ~49ms  (0.5%)
+```
 
-## Contents
+## Results
 
-| File | Description |
-|------|-------------|
-| `README.md` | This overview |
-| `METHODOLOGY.md` | Detailed measurement approach |
-| `benchmark_retrieval.py` | Reproducible benchmark script (template) |
-| `results_summary.json` | Aggregate timing data |
-| `data/raw_timings.csv` | Anonymized raw timing data (480 measurements) |
-| `scripts/stats_analysis.py` | Statistical analysis script (ANOVA, 95% CI) |
-| `query-category-eval/` | Accuracy evaluation by query type (20 queries, 4 categories) |
+### Reranking Latency (Single-Model, Production)
 
-## Quick Results
+| Metric | With Reranking | Without Reranking | Delta |
+|--------|----------------|-------------------|-------|
+| Mean | 79.1ms | 47.8ms | **+31.3ms** |
+| Median | 82.1ms | 49.9ms | +32.2ms |
+| Min | 50.3ms | 32.5ms | +17.8ms |
+| Max | 124.6ms | 80.6ms | +44.0ms |
 
-### Single-Model Benchmark (Production)
+### Cross-Model Validation
 
-| Metric | With Reranking | Without Reranking | Difference |
-|--------|----------------|-------------------|------------|
-| Mean Latency | 79.1ms | 47.8ms | +31.3ms |
-| Median Latency | 82.1ms | 49.9ms | +32.2ms |
-| Min Latency | 50.3ms | 32.5ms | +17.8ms |
-| Max Latency | 124.6ms | 80.6ms | +44.0ms |
+| Model | Size | Provider | Reranking Overhead |
+|-------|------|----------|-------------------|
+| Claude Haiku 4.5 | - | Amazon Bedrock | baseline |
+| Mistral Devstral | 22B | OpenRouter | +32.5ms |
+| Llama 3.3 | 70B | OpenRouter | +24.1ms |
+| Qwen 2.5 Coder | 32B | OpenRouter | +25.1ms |
 
-### Multi-Model Benchmark (Cross-Provider Validation)
+ANOVA p=0.34: no statistically significant difference across models. Cross-provider delta (Bedrock vs OpenRouter): 4.1ms.
 
-| Model Family | Size | Reranking Overhead |
-|--------------|------|-------------------|
-| Mistral | 22B | +32.5ms |
-| Llama | 70B | +24.1ms |
-| Qwen | 32B | +25.1ms |
-| **Mean** | - | **+27.2ms (+/-4.6ms)** |
+### Query Category Accuracy
 
-Cross-provider comparison (Amazon Bedrock vs OpenRouter): 4.1ms difference, confirming model-agnostic behavior.
-
-## System Configuration
-
-- **Corpus:** 7,432 pages, 20,679 chunks (legacy enterprise documentation)
-- **Retrieval:** Hybrid (BM25 + vector search with RRF fusion)
-- **Reranking:** FlashRank ms-marco-MiniLM-L-12-v2 (~4MB, CPU-optimized)
-- **Candidates:** 16 retrieved, reranked to top 8
-- **Hardware:** MacBook Pro M-series (CPU only, no GPU)
-
-## Query Category Evaluation
-
-Accuracy by query type across 20 test queries:
-
-| Category | Queries | Accuracy (Top-1) | Accuracy (Top-3) |
-|----------|---------|------------------|------------------|
+| Category | Queries | Top-1 | Top-3 |
+|----------|---------|-------|-------|
 | Procedural | 5 | 100% | 100% |
 | Conceptual | 5 | 80% | 100% |
 | Troubleshooting | 5 | 100% | 100% |
 | Configuration | 5 | 60% | 80% |
 | **Overall** | **20** | **85%** | **95%** |
 
-See `query-category-eval/` for detailed phase-by-phase results.
+0% false positive rate. 97.8% average accuracy on ground truth validation. See `query-category-eval/` for phase-by-phase results.
 
-## Adapting for Your System
+## System Under Test
 
-The benchmark script is a template. Modify for your RAG implementation:
+```
+Corpus:      7,432 pages / 20,679 chunks (Oracle Essbase 11.1.x documentation)
+Retrieval:   Hybrid (BM25 + vector search, RRF fusion)
+Reranker:    FlashRank ms-marco-MiniLM-L-12-v2 (~4MB, CPU-only)
+Pipeline:    16 candidates retrieved, reranked to top 8
+Hardware:    MacBook Pro M-series (CPU only, no GPU)
+Measurements: 480 total (120 single-model + 360 multi-model)
+```
 
-1. Replace imports with your RAG components
-2. Define domain-specific test queries
-3. Adjust retrieval configuration (k, reranking model)
+## Project Structure
 
-See `benchmark_retrieval.py` for the full template with inline comments.
+```
+rag-reranking-benchmarks/
+├── README.md                          # This file
+├── METHODOLOGY.md                     # Measurement approach and statistical methods
+├── LICENSE                            # Apache-2.0
+├── benchmark_retrieval.py             # Reproducible benchmark template
+├── results_summary.json               # Aggregate timing data
+├── data/
+│   └── raw_timings.csv                # 480 anonymized measurements
+├── scripts/
+│   └── stats_analysis.py              # ANOVA, 95% CI, cross-model comparison
+└── query-category-eval/
+    ├── README.md                      # Evaluation methodology
+    ├── query_classification.json      # 20 queries across 4 categories
+    ├── phase1_initial_results.json    # Raw RAG responses
+    ├── phase2_ground_truth.json       # Manual ground truth labels
+    ├── phase3_validation_results.json # Automated accuracy scoring
+    └── phase4_analysis.json           # Final analysis and failure modes
+```
 
 ## Reproducing
 
-1. Install dependencies: `pip install -r requirements.txt` (if provided)
-2. Run the benchmark: `python benchmark_retrieval.py`
-3. Analyze results: `python scripts/stats_analysis.py`
+```bash
+git clone https://github.com/clouatre-labs/rag-reranking-benchmarks
+cd rag-reranking-benchmarks
 
-See `METHODOLOGY.md` for measurement approach and statistical validation.
+# Run statistical analysis on existing data
+python scripts/stats_analysis.py
+
+# Adapt the benchmark template for your own RAG system
+# (see inline comments in benchmark_retrieval.py)
+```
+
+See [METHODOLOGY.md](METHODOLOGY.md) for the full measurement approach.
+
+## Adapting for Your System
+
+The benchmark script is a template. To benchmark your own RAG pipeline:
+
+1. Replace imports with your retrieval and reranking components
+2. Define domain-specific test queries
+3. Adjust retrieval parameters (k, reranking model, candidate count)
+
+The statistical analysis script works on any CSV with the same column schema as `data/raw_timings.csv`.
 
 ## Citation
 
@@ -105,9 +128,4 @@ https://clouatre.ca/posts/rag-legacy-systems/
 
 ## License
 
-Apache-2.0
-
-## Contact
-
-- Blog: [clouatre.ca](https://clouatre.ca)
-- LinkedIn: [huguesclouatre](https://linkedin.com/in/huguesclouatre)
+[Apache-2.0](LICENSE)
