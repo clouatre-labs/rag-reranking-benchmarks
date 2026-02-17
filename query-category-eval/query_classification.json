@@ -1,0 +1,160 @@
+{
+  "metadata": {
+    "created": "2026-01-23",
+    "source": "20 benchmark queries from Oracle Essbase RAG system",
+    "phase": "1-light-sampling"
+  },
+  "categories": {
+    "error_lookup": {
+      "description": "Exact error codes, specific values, lookup-style queries",
+      "queries": [
+        { "id": 13, "query": "What does error 1013001 mean?", "sampled": true },
+        {
+          "id": 14,
+          "query": "How do I fix connection timeout errors?",
+          "sampled": true
+        },
+        {
+          "id": 15,
+          "query": "What are common database corruption issues?",
+          "sampled": false
+        }
+      ]
+    },
+    "conceptual": {
+      "description": "Architecture, design, 'what is' questions",
+      "queries": [
+        {
+          "id": 16,
+          "query": "What is the Essbase architecture?",
+          "sampled": true
+        },
+        {
+          "id": 18,
+          "query": "What are the different storage options?",
+          "sampled": true
+        },
+        {
+          "id": 5,
+          "query": "What is the difference between MaxL and ESSCMD?",
+          "sampled": false
+        },
+        {
+          "id": 17,
+          "query": "How does Essbase handle concurrent users?",
+          "sampled": false
+        }
+      ]
+    },
+    "procedural": {
+      "description": "Step-by-step how-to, configuration, setup",
+      "queries": [
+        {
+          "id": 6,
+          "query": "How do I automate database backups?",
+          "sampled": true
+        },
+        {
+          "id": 7,
+          "query": "How do I write calculation scripts?",
+          "sampled": true
+        },
+        {
+          "id": 2,
+          "query": "How do I configure essbase.cfg?",
+          "sampled": false
+        },
+        { "id": 4, "query": "How do I write MaxL scripts?", "sampled": false },
+        { "id": 9, "query": "How do I use business rules?", "sampled": false },
+        {
+          "id": 10,
+          "query": "How do I monitor Essbase performance?",
+          "sampled": false
+        },
+        {
+          "id": 12,
+          "query": "How do I troubleshoot slow queries?",
+          "sampled": false
+        }
+      ]
+    },
+    "multi_hop": {
+      "description": "Requires connecting info from multiple sources, integration, cross-cutting",
+      "queries": [
+        {
+          "id": 19,
+          "query": "How do I integrate Essbase with OBIEE?",
+          "sampled": true
+        },
+        {
+          "id": 20,
+          "query": "What are the REST API capabilities?",
+          "sampled": true
+        },
+        {
+          "id": 8,
+          "query": "What are the best practices for calc script performance?",
+          "sampled": false
+        },
+        {
+          "id": 11,
+          "query": "What are the security best practices?",
+          "sampled": false
+        }
+      ]
+    },
+    "factual": {
+      "description": "Simple facts, lists, values",
+      "queries": [
+        { "id": 1, "query": "What ports does Essbase use?", "sampled": false },
+        {
+          "id": 3,
+          "query": "What are the memory settings for Essbase?",
+          "sampled": false
+        }
+      ]
+    }
+  },
+  "phase1_sample": [
+    {
+      "category": "error_lookup",
+      "id": 13,
+      "query": "What does error 1013001 mean?"
+    },
+    {
+      "category": "error_lookup",
+      "id": 14,
+      "query": "How do I fix connection timeout errors?"
+    },
+    {
+      "category": "conceptual",
+      "id": 16,
+      "query": "What is the Essbase architecture?"
+    },
+    {
+      "category": "conceptual",
+      "id": 18,
+      "query": "What are the different storage options?"
+    },
+    {
+      "category": "procedural",
+      "id": 6,
+      "query": "How do I automate database backups?"
+    },
+    {
+      "category": "procedural",
+      "id": 7,
+      "query": "How do I write calculation scripts?"
+    },
+    {
+      "category": "multi_hop",
+      "id": 19,
+      "query": "How do I integrate Essbase with OBIEE?"
+    },
+    {
+      "category": "multi_hop",
+      "id": 20,
+      "query": "What are the REST API capabilities?"
+    }
+  ]
+}

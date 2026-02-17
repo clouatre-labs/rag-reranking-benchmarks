@@ -1,0 +1,173 @@
+{
+  "phase": 4,
+  "description": "Expanded sampling to n=10 per category (20 additional queries)",
+  "date": "2026-01-24",
+  "queries": [
+    {
+      "id": 41,
+      "category": "error_lookup",
+      "query": "What does error 1012001 mean?",
+      "score": "fail",
+      "failure_mode": "corpus_gap",
+      "notes": "Error 1012001 not documented in corpus. System correctly identified error not in context."
+    },
+    {
+      "id": 42,
+      "category": "error_lookup",
+      "query": "How do I resolve out of memory errors?",
+      "score": "pass",
+      "failure_mode": null,
+      "notes": "Comprehensive 8-step answer with memory requirements, ulimit, essbase.cfg settings, error codes."
+    },
+    {
+      "id": 43,
+      "category": "error_lookup",
+      "query": "What causes lock timeout errors?",
+      "score": "pass",
+      "failure_mode": null,
+      "notes": "Detailed causes (4) and solutions (5) with LOCKTIMEOUT config, deadlock detection, memory issues."
+    },
+    {
+      "id": 44,
+      "category": "error_lookup",
+      "query": "What does error 1007001 mean?",
+      "score": "fail",
+      "failure_mode": "corpus_gap",
+      "notes": "Error 1007001 not in corpus. System correctly identified error ranges documented."
+    },
+    {
+      "id": 45,
+      "category": "error_lookup",
+      "query": "How do I fix data load errors?",
+      "score": "pass",
+      "failure_mode": null,
+      "notes": "6-step troubleshooting with dataload.err, DATAERRORLIMIT, load buffers, parallel loads."
+    },
+    {
+      "id": 46,
+      "category": "conceptual",
+      "query": "What is a substitution variable?",
+      "score": "pass",
+      "failure_mode": null,
+      "notes": "Complete definition with levels (server/app/db), precedence, common uses."
+    },
+    {
+      "id": 47,
+      "category": "conceptual",
+      "query": "How does transparent partitioning work?",
+      "score": "pass",
+      "failure_mode": null,
+      "notes": "Comprehensive: data retrieval, updates, performance, use cases, 6 advantages."
+    },
+    {
+      "id": 48,
+      "category": "conceptual",
+      "query": "What is the difference between BSO and ASO?",
+      "score": "partial",
+      "failure_mode": "scattered_info",
+      "notes": "Provided 4 specific differences but admits not comprehensive. Info scattered across docs."
+    },
+    {
+      "id": 49,
+      "category": "conceptual",
+      "query": "What are attribute dimensions?",
+      "score": "pass",
+      "failure_mode": null,
+      "notes": "Detailed explanation with purpose, defaults, member types, usage, Sample.Basic examples."
+    },
+    {
+      "id": 50,
+      "category": "conceptual",
+      "query": "How does Essbase security work?",
+      "score": "pass",
+      "failure_mode": null,
+      "notes": "Comprehensive: 3 security modes (Native, EPM, Fusion), components, operations, backup."
+    },
+    {
+      "id": 51,
+      "category": "procedural",
+      "query": "How do I create a data load rule?",
+      "score": "pass",
+      "failure_mode": null,
+      "notes": "6-step process with references to specific documentation sections."
+    },
+    {
+      "id": 52,
+      "category": "procedural",
+      "query": "How do I set up partitioning?",
+      "score": "pass",
+      "failure_mode": null,
+      "notes": "5-step process with partition types, Admin Services/MaxL methods, security config."
+    },
+    {
+      "id": 53,
+      "category": "procedural",
+      "query": "How do I export data to a file?",
+      "score": "pass",
+      "failure_mode": null,
+      "notes": "Complete syntax, 3 examples, file location, permissions, data types, anonymization."
+    },
+    {
+      "id": 54,
+      "category": "procedural",
+      "query": "How do I create a report script?",
+      "score": "pass",
+      "failure_mode": null,
+      "notes": "4-step process with example structure, extraction/formatting commands, chapter refs."
+    },
+    {
+      "id": 55,
+      "category": "procedural",
+      "query": "How do I restructure a database?",
+      "score": "pass",
+      "failure_mode": null,
+      "notes": "2 methods (Admin Services, MaxL), example command, automatic vs manual triggers."
+    },
+    {
+      "id": 56,
+      "category": "multi_hop",
+      "query": "What are the best practices for dimension design?",
+      "score": "pass",
+      "failure_mode": null,
+      "notes": "8 comprehensive practices covering dense/sparse, attributes, grouping, testing."
+    },
+    {
+      "id": 57,
+      "category": "multi_hop",
+      "query": "How do I optimize data load performance?",
+      "score": "pass",
+      "failure_mode": null,
+      "notes": "8 detailed recommendations with essbase.cfg settings, parallel loads, buffers."
+    },
+    {
+      "id": 58,
+      "category": "multi_hop",
+      "query": "What are the backup and recovery best practices?",
+      "score": "pass",
+      "failure_mode": null,
+      "notes": "5 sections covering methods, frequency, security, media failures, considerations."
+    },
+    {
+      "id": 59,
+      "category": "multi_hop",
+      "query": "How do I troubleshoot calculation performance?",
+      "score": "pass",
+      "failure_mode": null,
+      "notes": "6 detailed steps with SET MSG commands, cache settings, Dynamic Calc handling."
+    },
+    {
+      "id": 60,
+      "category": "multi_hop",
+      "query": "What are the best practices for outline design?",
+      "score": "pass",
+      "failure_mode": null,
+      "notes": "6 comprehensive guidelines covering query/calc optimization, user design, testing."
+    }
+  ],
+  "summary": {
+    "error_lookup": { "pass": 3, "partial": 0, "fail": 2 },
+    "conceptual": { "pass": 4, "partial": 1, "fail": 0 },
+    "procedural": { "pass": 5, "partial": 0, "fail": 0 },
+    "multi_hop": { "pass": 5, "partial": 0, "fail": 0 }
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "phase": null,
+  "description": null,
+  "date": null,
+  "queries": [
+    {
+      "id": 13,
+      "category": "error_lookup",
+      "query": "What does error 1013001 mean?",
+      "score": null,
+      "failure_mode": null,
+      "notes": null
+    },
+    {
+      "id": 14,
+      "category": "error_lookup",
+      "query": "How do I fix connection timeout errors?",
+      "score": null,
+      "failure_mode": null,
+      "notes": null
+    },
+    {
+      "id": 16,
+      "category": "conceptual",
+      "query": "What is the Essbase architecture?",
+      "score": null,
+      "failure_mode": null,
+      "notes": null
+    },
+    {
+      "id": 18,
+      "category": "conceptual",
+      "query": "What are the different storage options?",
+      "score": null,
+      "failure_mode": null,
+      "notes": null
+    },
+    {
+      "id": 6,
+      "category": "procedural",
+      "query": "How do I automate database backups?",
+      "score": null,
+      "failure_mode": null,
+      "notes": null
+    },
+    {
+      "id": 7,
+      "category": "procedural",
+      "query": "How do I write calculation scripts?",
+      "score": null,
+      "failure_mode": null,
+      "notes": null
+    },
+    {
+      "id": 19,
+      "category": "multi_hop",
+      "query": "How do I integrate Essbase with OBIEE?",
+      "score": null,
+      "failure_mode": null,
+      "notes": null
+    },
+    {
+      "id": 20,
+      "category": "multi_hop",
+      "query": "What are the REST API capabilities?",
+      "score": null,
+      "failure_mode": null,
+      "notes": null
+    }
+  ],
+  "summary": null
+}

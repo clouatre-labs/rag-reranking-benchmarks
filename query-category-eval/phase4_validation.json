@@ -1,0 +1,98 @@
+{
+  "phase": 4,
+  "description": "Ground truth validation of Phase 4 high-confidence passes",
+  "date": "2026-01-24",
+  "validations": [
+    {
+      "query_id": 46,
+      "query": "What is a substitution variable?",
+      "category": "conceptual",
+      "corpus_check": {
+        "found_in": [
+          "Database_Administrators_Guide_11.1.2.4.md",
+          "ESBTR_Technical_Reference.md"
+        ],
+        "sections": [
+          "Using Substitution Variables (p.120)",
+          "Rules for Setting Substitution Variable Names"
+        ],
+        "key_facts_verified": [
+          "Global placeholder for changing information",
+          "Levels: server, application, database",
+          "Precedence: database > application > server",
+          "Used in calculation scripts, formulas"
+        ]
+      },
+      "accuracy": "100%",
+      "false_positive": false
+    },
+    {
+      "query_id": 47,
+      "query": "How does transparent partitioning work?",
+      "category": "conceptual",
+      "corpus_check": {
+        "found_in": ["Database_Administrators_Guide_11.1.2.4.md"],
+        "sections": [
+          "Transparent Partitions (p.232)",
+          "Advantages of Transparent Partitions (p.234)"
+        ],
+        "key_facts_verified": [
+          "Data retrieved from source each time",
+          "Updates written back to source",
+          "Performance impact with more users",
+          "Advantages: disk space, data currency, write-back"
+        ]
+      },
+      "accuracy": "100%",
+      "false_positive": false
+    },
+    {
+      "query_id": 53,
+      "query": "How do I export data to a file?",
+      "category": "procedural",
+      "corpus_check": {
+        "found_in": ["ESBTR_Technical_Reference.md"],
+        "sections": ["export database", "MaxL DDL Statements"],
+        "key_facts_verified": [
+          "export database syntax correct",
+          "data_file parameter correct",
+          "level0 data vs all data options exist",
+          "data anonymous option exists"
+        ]
+      },
+      "accuracy": "100%",
+      "false_positive": false
+    },
+    {
+      "query_id": 57,
+      "query": "How do I optimize data load performance?",
+      "category": "multi_hop",
+      "corpus_check": {
+        "found_in": [
+          "Database_Administrators_Guide_11.1.2.4.md",
+          "ESBTR_Technical_Reference.md"
+        ],
+        "sections": [
+          "Performing Multiple Data Loads in Parallel",
+          "DLTHREADSPREPARE",
+          "DLTHREADSWRITE"
+        ],
+        "key_facts_verified": [
+          "Parallel data load feature exists",
+          "DLTHREADSPREPARE config setting exists",
+          "DLTHREADSWRITE config setting exists",
+          "Load buffers for ASO databases"
+        ]
+      },
+      "accuracy": "95%",
+      "notes": "Hardware upgrade recommendation is general advice, not corpus-specific",
+      "false_positive": false
+    }
+  ],
+  "summary": {
+    "queries_validated": 4,
+    "false_positives": 0,
+    "average_accuracy": "98.75%",
+    "validation_method": "Manual corpus search with rg"
+  }
+}

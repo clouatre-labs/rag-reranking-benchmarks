@@ -1,0 +1,104 @@
+{
+  "phase": null,
+  "description": null,
+  "date": null,
+  "queries": [
+    {
+      "id": 15,
+      "category": "error_lookup",
+      "query": "What are common database corruption issues?",
+      "score": "pass",
+      "failure_mode": null,
+      "notes": "Detailed answer with specific errors (Invalid Block Header, AVL Tree), validation steps, reference to fixing section"
+    },
+    {
+      "id": 21,
+      "category": "error_lookup",
+      "query": "What does error 1003001 mean?",
+      "score": "fail",
+      "failure_mode": "corpus_gap",
+      "notes": "Error 1003001 not in corpus - honest failure. Correctly identified error ranges documented and suggested alternatives."
+    },
+    {
+      "id": 22,
+      "category": "error_lookup",
+      "query": "How do I troubleshoot login failures?",
+      "score": "partial",
+      "failure_mode": "incomplete",
+      "notes": "Provides general guidance (logs, user info, auth type) but admits context lacks specific troubleshooting steps"
+    },
+    {
+      "id": 5,
+      "category": "conceptual",
+      "query": "What is the difference between MaxL and ESSCMD?",
+      "score": "pass",
+      "failure_mode": null,
+      "notes": "Good explanation of relationship, conversion utility, compatibility, syntax differences, platform limitations"
+    },
+    {
+      "id": 17,
+      "category": "conceptual",
+      "query": "How does Essbase handle concurrent users?",
+      "score": "pass",
+      "failure_mode": null,
+      "notes": "Excellent detailed answer about block locking, exclusive locks, uncommitted access, key settings (CALCLOCKBLOCK, LOCKBLOCK)"
+    },
+    {
+      "id": 23,
+      "category": "conceptual",
+      "query": "What is a sparse vs dense dimension?",
+      "score": "pass",
+      "failure_mode": null,
+      "notes": "Clear explanation with Sample.Basic examples, key differences, attribute dimensions note"
+    },
+    {
+      "id": 2,
+      "category": "procedural",
+      "query": "How do I configure essbase.cfg?",
+      "score": "pass",
+      "failure_mode": null,
+      "notes": "Complete step-by-step with location, editing, saving, applying changes, examples, key notes"
+    },
+    {
+      "id": 4,
+      "category": "procedural",
+      "query": "How do I write MaxL scripts?",
+      "score": "pass",
+      "failure_mode": null,
+      "notes": "Good structure, examples, execution methods (essmsh, Admin Services, Perl), automation tips"
+    },
+    {
+      "id": 10,
+      "category": "procedural",
+      "query": "How do I monitor Essbase performance?",
+      "score": "pass",
+      "failure_mode": null,
+      "notes": "Multiple methods (logs, MaxL, system tools, dialog boxes), specific paths and commands"
+    },
+    {
+      "id": 8,
+      "category": "multi_hop",
+      "query": "What are the best practices for calc script performance?",
+      "score": "partial",
+      "failure_mode": "scattered_info",
+      "notes": "Provides some insights (Dynamic Calc, parallel calc) from corpus but admits context lacks comprehensive best practices. Added general recommendations not from corpus."
+    },
+    {
+      "id": 11,
+      "category": "multi_hop",
+      "query": "What are the security best practices?",
+      "score": "partial",
+      "failure_mode": "scattered_info",
+      "notes": "Lists security topics mentioned but admits no explicit best practices in context. Recommends external guide."
+    },
+    {
+      "id": 24,
+      "category": "multi_hop",
+      "query": "How do I migrate from on-premise to cloud Essbase?",
+      "score": "fail",
+      "failure_mode": "corpus_gap",
+      "notes": "Cloud migration not covered in on-premise 11.x documentation - honest failure. Correctly recommends Oracle cloud docs."
+    }
+  ],
+  "summary": null
+}
