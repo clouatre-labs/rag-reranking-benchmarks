@@ -87,7 +87,7 @@ class HybridRetriever:
         self.vector_store = vector_store
         self.k = k
         self.use_rerank = use_rerank
-        self.bm25 = BM25Okapi([doc.page_content.lower().split() for doc in chunks])
+        self.bm25 = BM25Okapi([doc.page_content.lower().split() for doc in chunks])  # simplified; production uses custom tokenizer
         self._ranker: Ranker | None = None  # lazy-loaded
 
     @property
@@ -118,7 +118,7 @@ BM25 and vector search each return 16 candidates. RRF combines the two ranked li
 
 ```python
     def invoke(self, query: str) -> list[Document]:
-        bm25_scores = self.bm25.get_scores(query.lower().split())
+        bm25_scores = self.bm25.get_scores(query.lower().split())  # simplified; production uses custom tokenizer
         bm25_top = sorted(range(len(bm25_scores)),
                           key=lambda i: bm25_scores[i], reverse=True)[:16]
         vector_results = self.vector_store.similarity_search_with_score(query, k=16)
@@ -126,11 +126,11 @@ BM25 and vector search each return 16 candidates. RRF combines the two ranked li
         # Reciprocal rank fusion (k=60)
         doc_scores: dict[str, tuple[Document, float]] = {}
         for rank, idx in enumerate(bm25_top):
-            doc_id = self.chunks[idx].metadata.get("source", "")
+            doc_id = self.chunks[idx].metadata.get("source", "") + str(hash(self.chunks[idx].page_content[:100]))
             doc_scores[doc_id] = (self.chunks[idx],
                                   doc_scores.get(doc_id, (None, 0))[1] + 1 / (rank + 60))
         for rank, (doc, _) in enumerate(vector_results):
-            doc_id = doc.metadata.get("source", "")
+            doc_id = doc.metadata.get("source", "") + str(hash(doc.page_content[:100]))
             doc_scores[doc_id] = (doc,
                                   doc_scores.get(doc_id, (None, 0))[1] + 1 / (rank + 60))
 
@@ -182,10 +182,11 @@ rag-reranking-benchmarks/
 └── query-category-eval/
     ├── README.md                      # Evaluation methodology
     ├── query_classification.json      # 20 queries across 4 categories
-    ├── phase1_initial_results.json    # Raw RAG responses
-    ├── phase2_ground_truth.json       # Manual ground truth labels
-    ├── phase3_validation_results.json # Automated accuracy scoring
-    └── phase4_analysis.json           # Final analysis and failure modes
+    ├── phase1_results.json            # Raw RAG responses
+    ├── phase2_results.json            # Manual ground truth labels
+    ├── phase3_validation.json         # Automated accuracy scoring
+    ├── phase4_results.json            # Final analysis and failure modes
+    └── phase4_validation.json         # Validation results
 ```
 
 ## Reproducing
