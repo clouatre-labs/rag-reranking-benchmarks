@@ -196,6 +196,49 @@ Lower overhead likely due to: small candidate set (16 vs 50-100), CPU-optimized 
 
 ---
 
+## Accuracy Evaluation
+
+### Scoring Methodology
+
+We evaluated RAG system accuracy across 32 scored queries (Phase 2 + Phase 4) using a three-tier scoring system:
+
+- **pass**: Complete, accurate answer directly supported by retrieved context
+- **partial**: Useful information but incomplete, with caveats, or requiring external knowledge
+- **fail**: Unable to answer, incorrect information, or corpus gap
+
+### Phase Progression Rationale
+
+1. **Phase 1 (8 queries, unscored)**: Exploration to identify failure modes and retrieval patterns
+2. **Phase 2 (12 queries, scored)**: Systematic evaluation with manual scoring and failure mode classification
+3. **Phase 3 (4 validations)**: Ground truth validation of high-confidence Phase 1-2 passes to check for false positives
+4. **Phase 4 (20 queries, scored)**: Expanded evaluation for publication confidence
+5. **Phase 4 validation (4 validations)**: Additional ground truth validation of Phase 4 passes
+
+This progression allows early detection of systematic issues (Phase 1), establishes baseline metrics (Phase 2), validates confidence in those metrics (Phase 3), and expands the sample for publication (Phase 4) with additional validation (Phase 4 validation).
+
+### Ground Truth Validation Method
+
+Manual corpus search using `rg` (ripgrep) against Oracle Essbase 11.1.x documentation. For each validated query:
+
+1. Extract key claims from the RAG system's answer
+2. Search the source corpus for supporting documentation
+3. Verify each claim against source sections
+4. Assess accuracy percentage (100% = all claims verified, 95% = minor discrepancies, etc.)
+5. Check for false positives (claims not in corpus but presented as fact)
+
+Results: 8 validations across Phase 3-4, 98.1% average accuracy, 0% false positive rate.
+
+### Sample Size Justification
+
+- **Phase 2 (12 queries)**: 3 per category provides initial confidence
+- **Phase 3 validation (4 queries)**: Validates high-confidence passes; 0% false positive rate on 4 validations supports confidence in Phase 2 metrics
+- **Phase 4 (20 queries)**: Expands to 5 per category for publication-grade confidence
+- **Phase 4 validation (4 queries)**: Additional validation confirms Phase 4 quality
+
+Combined 32 scored queries with 8 ground truth validations (25% validation rate) provides adequate confidence for published success rate ranges.
+
+---
+
 ## Reproducibility
 
 ### Data Files
