@@ -235,7 +235,7 @@ Results: 8 validations across Phase 3-4, 98.1% average accuracy, 0% false positi
 - **Phase 4 (20 queries)**: Expands to 5 per category for publication-grade confidence
 - **Phase 4 validation (4 queries)**: Additional validation confirms Phase 4 quality
 
-Combined 32 scored queries with 8 ground truth validations (25% validation rate) provides adequate confidence for published success rate ranges.
+Combined 32 scored queries with 8 ground truth validations (25% validation rate) provides adequate confidence for published pass rates.
 
 ---
 
