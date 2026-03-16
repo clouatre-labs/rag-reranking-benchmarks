@@ -1,7 +1,7 @@
 cff-version: 1.2.0
-message: "If you use this data, please cite it as below."
+message: "If you use this dataset, please cite the article from preferred-citation and the dataset itself."
 type: dataset
-title: "RAG for Legacy Systems: 7,432 Pages to 3s Answers"
+title: "RAG Reranking Benchmarks"
 authors:
   - family-names: Clouatre
     given-names: Hugues
@@ -21,3 +21,12 @@ keywords:
   - benchmarking
   - latency
   - supplementary-materials
+preferred-citation:
+  authors:
+    - family-names: Clouatre
+      given-names: Hugues
+      orcid: "https://orcid.org/0009-0002-4291-1999"
+  title: "RAG for Legacy Systems: 7,432 Pages to 3s Answers"
+  type: article
+  url: "https://clouatre.ca/posts/rag-legacy-systems/"
+  year: 2026

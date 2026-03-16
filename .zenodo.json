@@ -1,10 +1,11 @@
 {
-  "title": "RAG for Legacy Systems: 7,432 Pages to 3s Answers -- Supplementary Data",
+  "title": "RAG Reranking Benchmarks",
   "description": "480 timing measurements across 4 model families and 2 providers benchmarking reranking latency in RAG pipelines. ANOVA p=0.34 confirms reranking overhead (+31ms) is statistically insignificant versus 10s total query time.",
   "upload_type": "dataset",
   "access_right": "open",
-  "license": "apache-2.0",
+  "license": "Apache-2.0",
   "version": "1.0.0",
+  "publication_date": "2026-01-23",
   "creators": [
     {
       "name": "Clouatre, Hugues",
@@ -15,7 +16,7 @@
     {
       "identifier": "https://clouatre.ca/posts/rag-legacy-systems/",
       "relation": "isSupplementTo",
-      "resource_type": "other"
+      "resource_type": "publication-other"
     }
   ],
   "keywords": ["rag", "reranking", "benchmarking", "latency", "supplementary-materials"]
