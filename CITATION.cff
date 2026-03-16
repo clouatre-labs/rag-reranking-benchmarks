@@ -9,7 +9,7 @@ authors:
 repository-code: https://github.com/clouatre-labs/rag-reranking-benchmarks
 url: https://clouatre.ca/posts/rag-legacy-systems/
 license: Apache-2.0
-date-released: "2026-01-23"
+date-released: "2026-03-16"
 identifiers:
   - type: doi
     value: 10.5281/zenodo.19056881
