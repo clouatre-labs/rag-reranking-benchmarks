@@ -2,6 +2,7 @@
 
 # RAG Reranking Benchmarks
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19056880.svg)](https://doi.org/10.5281/zenodo.19056880)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/clouatre-labs/rag-reranking-benchmarks?style=flat)](https://github.com/clouatre-labs/rag-reranking-benchmarks)
 [![Python](https://img.shields.io/badge/python-3.11+-blue)](https://python.org)
@@ -247,7 +248,7 @@ The statistical analysis script works on any CSV with the same column schema as 
   author = {Clouatre, Hugues},
   title  = {RAG for Legacy Systems: 7,432 Pages to 3s Answers},
   year   = {2026},
-  doi    = {10.5281/zenodo.19056881},
+  doi    = {10.5281/zenodo.19056880},
   urldate = {2026-01-23},
   howpublished = {\url{https://clouatre.ca/posts/rag-legacy-systems/}},
   note   = {Supplementary materials: https://github.com/clouatre-labs/rag-reranking-benchmarks}
