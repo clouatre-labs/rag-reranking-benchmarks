@@ -4,7 +4,6 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19056880.svg)](https://doi.org/10.5281/zenodo.19056880)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/clouatre-labs/rag-reranking-benchmarks?style=flat)](https://github.com/clouatre-labs/rag-reranking-benchmarks)
 [![Python](https://img.shields.io/badge/python-3.11+-blue)](https://python.org)
 [![Measurements](https://img.shields.io/badge/measurements-480-green)](data/raw_timings.csv)
 
