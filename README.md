@@ -247,8 +247,8 @@ The statistical analysis script works on any CSV with the same column schema as 
   author = {Clouatre, Hugues},
   title  = {RAG Reranking Benchmarks},
   year   = {2026},
-  note   = {Supplementary materials for "Making Legacy Knowledge Searchable with RAG"},
-  url    = {https://clouatre.ca/posts/rag-legacy-systems/}
+  url    = {https://clouatre.ca/posts/rag-legacy-systems/},
+  note   = {Supplementary materials: https://github.com/clouatre-labs/rag-reranking-benchmarks}
 }
 ```
 
