@@ -7,7 +7,7 @@
 [![Python](https://img.shields.io/badge/python-3.11+-blue)](https://python.org)
 [![Measurements](https://img.shields.io/badge/measurements-480-green)](data/raw_timings.csv)
 
-Does reranking actually slow down RAG queries? We measured it. 480 timing measurements across 4 model families and 2 providers say: **no, +31ms is noise in a multi-second pipeline.**
+Cross-encoder reranking is widely adopted in retrieve-rerank-generate pipelines to improve context relevance before generation, yet its latency impact on end-to-end query time remains undercharacterized in production-scale settings. We present a controlled latency measurement study of a hybrid sparse-dense retrieval pipeline with reciprocal rank fusion (RRF) and cross-encoder reranking (FlashRank ms-marco-MiniLM-L-12-v2, CPU-only) over a corpus of 20,679 chunks drawn from 7,432 pages of technical documentation. Across 480 timed queries spanning four LLM families (Claude Haiku 4.5, Mistral Devstral 22B, Llama 3.3 70B, Qwen 2.5 Coder 32B) and two inference providers (Amazon Bedrock, OpenRouter), we find that reranking adds a mean overhead of 31.3 ms against a total end-to-end query latency of approximately 10,000 ms (0.3%). One-way ANOVA (p=0.34, eta-squared=0.037) and Kruskal-Wallis (p=0.78) both confirm that LLM family choice explains less than 4% of overhead variance and that the overhead is not statistically significant. These results indicate that lightweight CPU-bound cross-encoder reranking imposes negligible latency cost in LLM-dominated pipelines, supporting its adoption without dedicated hardware in latency-sensitive deployments.
 
 Supplementary materials for [Making Legacy Knowledge Searchable with RAG](https://clouatre.ca/posts/rag-legacy-systems/).
 
@@ -15,7 +15,7 @@ Supplementary materials for [Making Legacy Knowledge Searchable with RAG](https:
 
 ## The Question
 
-Reranking improves retrieval quality by reordering candidate chunks before they reach the LLM. But it adds a neural inference step. In a production RAG pipeline serving legacy enterprise documentation, is the latency cost worth it?
+Does the addition of a lightweight cross-encoder reranking stage impose a statistically significant latency overhead on the end-to-end query time of a hybrid sparse-dense retrieval-augmented generation pipeline, and does this overhead vary systematically across LLM families or inference providers?
 
 ```text
 Total query time (typical):  ~10,000ms
