@@ -19,5 +19,8 @@
       "resource_type": "publication-other"
     }
   ],
-  "keywords": ["rag", "reranking", "benchmarking", "latency", "supplementary-materials"]
+  "keywords": ["rag", "reranking", "benchmarking", "latency", "supplementary-materials"],
+  "custom": {
+    "code:codeRepository": "https://github.com/clouatre-labs/rag-reranking-benchmarks"
+  }
 }
