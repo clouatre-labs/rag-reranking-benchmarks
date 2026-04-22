@@ -3,7 +3,7 @@ message: "If you use this dataset, please cite the article from preferred-citati
 type: dataset
 title: "RAG Reranking Benchmarks"
 authors:
-  - family-names: Clouatre
+  - family-names: Clouâtre
     given-names: Hugues
     orcid: "https://orcid.org/0009-0002-4291-1999"
 repository-code: https://github.com/clouatre-labs/rag-reranking-benchmarks
@@ -12,13 +12,13 @@ license: Apache-2.0
 date-released: "2026-03-16"
 identifiers:
   - type: doi
-    value: 10.5281/zenodo.19056881
+    value: 10.5281/zenodo.19056880
     description: Zenodo DOI
 version: "1.0.0"
 abstract: >
   480 timing measurements across 4 model families and 2 providers benchmarking
-  reranking latency in RAG pipelines. ANOVA p=0.34 confirms reranking overhead
-  (+31ms) is statistically insignificant versus 10s total query time.
+  reranking latency in RAG pipelines. Data include per-query latency samples
+  (CSV), model configuration metadata, and ANOVA statistical outputs.
 keywords:
   - rag
   - reranking
@@ -27,7 +27,7 @@ keywords:
   - supplementary-materials
 preferred-citation:
   authors:
-    - family-names: Clouatre
+    - family-names: Clouâtre
       given-names: Hugues
       orcid: "https://orcid.org/0009-0002-4291-1999"
   title: "RAG for Legacy Systems: 7,432 Pages to 3s Answers"
