@@ -244,7 +244,7 @@ The statistical analysis script works on any CSV with the same column schema as 
 
 ```bibtex
 @misc{clouatre2026ragreranking,
-  author = {Clouatre, Hugues},
+  author = {Clouâtre, Hugues},
   title  = {RAG for Legacy Systems: 7,432 Pages to 3s Answers},
   year   = {2026},
   doi    = {10.5281/zenodo.19056880},
